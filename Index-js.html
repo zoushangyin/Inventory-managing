@@ -1,0 +1,303 @@
+<!--- Developed by zou shangyin 2020 --->
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      var elems = document.querySelectorAll('select');
+      var instances = M.FormSelect.init(elems);
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      google.script.run.withSuccessHandler(getUsers).readUserData();
+      google.script.run.withSuccessHandler(getUsersforAddItem).readUserData();
+      google.script.run.withSuccessHandler(getFundings).readFundingData();
+    });
+    
+    document.getElementById('user_list').addEventListener("change", changeUser);
+    document.getElementById('btn_search_id').addEventListener("click", function(){
+      google.script.run.withSuccessHandler(searchID).loadItemData();
+    });
+    
+    document.getElementById('input_id').addEventListener("input", function(){
+    
+      if (document.getElementById('input_id').value != ""){
+        document.getElementById('btn_search_id').className="waves-effect waves-light btn";
+
+      }
+      else{
+        document.getElementById('btn_search_id').className="btn disabled";
+
+      }
+      
+    });
+    
+    document.getElementById('input_uname').addEventListener("input", function(){
+    
+      if (document.getElementById('input_uname').value != ""){
+        document.getElementById('btn_addUser').className="waves-effect waves-light btn";
+        document.getElementById("add_item_result").innerHTML = "";
+      }
+      else{
+        document.getElementById('btn_addUser').className="btn disabled";
+        document.getElementById("add_item_result").innerHTML = "";
+      }
+      
+    });
+    
+    document.getElementById('input_item_name').addEventListener("input", function(){
+      if (document.getElementById('input_item_name').value != ""){
+        document.getElementById('btn_addItem').className="waves-effect waves-light btn";
+      }
+      else{
+        document.getElementById('btn_addItem').className="btn disabled";
+      }
+      
+    });
+    
+    
+        function openAddUser(){
+            document.getElementById('addUser').style.display='block';
+            document.getElementById('fade').style.display='block'
+        }
+        function closeAddUser(){
+            document.getElementById('addUser').style.display='none';
+            document.getElementById('fade').style.display='none'
+        }
+        
+        function openAddItem(){
+            document.getElementById('addItem').style.display='block';
+            document.getElementById('fadeAddItem').style.display='block'
+
+        }
+        function closeAddItem(){
+            document.getElementById('addItem').style.display='none';
+            document.getElementById('fadeAddItem').style.display='none'
+        }
+        
+        function addUser(){
+          var input_uname = document.getElementById('input_uname').value;
+          google.script.run.addUser(input_uname);
+          document.getElementById('input_uname').value = "";
+          google.script.run.withSuccessHandler(getUsers).readUserData();
+          document.getElementById("add_user_result").innerHTML = "Add user successfully. Please reload page."
+          
+          
+        }
+        
+        function getUsersforAddItem(values){
+        var user_select = document.getElementById("select_purchaser");
+        user_select.innerHTML = '<option value="">Choose user account</option>';
+
+        values.forEach(function(item) {
+          var op = document.createElement('option');
+          op.value = item[0];
+          op.textContent = item[0];
+          user_select.appendChild(op);
+    
+        });
+        }
+        
+        function getUsers(values){
+        var user_select = document.getElementById("user_list");
+        user_select.innerHTML = '<option value="">Select user account</option>';
+
+        values.forEach(function(item) {
+          var op = document.createElement('option');
+          op.value = item[0];
+          op.textContent = item[0];
+          user_select.appendChild(op);
+        
+        });
+        }
+        
+        function getFundings(values){
+        var funding_select = document.getElementById("select_funding");
+        funding_select.innerHTML = '<option value="">Choose funding</option>';
+
+        values.forEach(function(item) {
+          var op = document.createElement('option');
+          op.value = item[0];
+          op.textContent = item[0];
+          funding_select.appendChild(op);
+         
+        });
+        }
+        
+        function addItem(){
+          var item_name = document.getElementById("input_item_name").value;
+          var funding = document.getElementById("select_funding").value;
+          var location = document.getElementById("select_location").value;
+          var purchaser = document.getElementById("select_purchaser").value;
+          google.script.run.addItem(item_name, funding, location, purchaser);
+          document.getElementById("add_item_result").innerHTML = "Add item successfully."
+          document.getElementById("input_item_name").value = "";
+          document.getElementById("select_funding").value = "";
+          document.getElementById("select_location").value = "";
+          document.getElementById("select_purchaser").value = "";
+          document.getElementById('btn_addItem').className="btn disabled";
+          
+        }
+        
+        function showItems(values){
+        //values = google.script.run.readItemData();
+        var x = document.getElementById("item_table");
+        x.innerHTML = "<tr><th>Name</th><th>Quantity</th><th>Location</th><th>Current State</th><th>Current/Last User</th><th>Borrow/Return Date</th></tr>";
+        values.forEach(function(item) {
+          x.innerHTML +="<tr><td>" + item[0] + "</td><td>" + item[1] +  "</td><td>" + item[2] +  "</td><td>" + item[5] +  "</td><td>" + item[6] +  "</td><td>" + item[7] + "</td></tr>";
+        });
+
+        }
+        
+        function searchID(values){
+          var id = document.getElementById("input_id").value;
+          var uname = document.getElementById("user_list").value;
+          var table = document.getElementById("item_table");
+          
+          table.innerHTML = "<tr><th>ID</th><th>Item Name</th><th>Location</th><th>Current State</th><th>Current/Last User</th><th>Borrow/Return Date</th><th>Action</th></tr>";
+          values.forEach(function(item){
+            var row = document.createElement('tr');
+            
+            if(item[0] == id){
+            var item_list = [0, 1, 3, 6, 7, 8];
+            item_list.forEach(function(i){
+              var cell = document.createElement('td');
+              cell.textContent = item[i];
+              row.appendChild(cell);
+            });
+
+            var btn_borrow = document.createElement('a');
+            btn_borrow.textContent = "Borrow";
+            btn_borrow.href = "javascript:void(0)";
+            btn_borrow.className ="waves-effect waves-light btn";
+            //btn_borrow.id = "btn_borrow_"+item[0];
+            //btn_borrow.value = item[0];
+            
+            btn_borrow.addEventListener("click", function(){
+              var current_uname = document.getElementById("user_list").value;
+              if (current_uname != ""){
+                borrowItem(item[0], uname);
+                this.className="btn disabled";
+              }
+              else{
+                alert("Please select user");
+              }
+              
+            });
+
+            row.appendChild(document.createElement('td').appendChild(btn_borrow));
+            table.appendChild(row);
+            
+          }
+            
+            
+          });
+        }
+        
+        
+        function changeUser(){
+          var x = document.getElementById("item_table");
+          x.innerHTML = "";
+        }
+        
+        function getAvailable(values) {
+          //google.script.run.withSuccessHandler(showItems).loadAvailabelItemData();
+          //var values = google.script.run.loadItemData();
+          var table = document.getElementById("item_table");
+          table.innerHTML = "<tr><th>ID</th><th>Item Name</th><th>Location</th><th>Current State</th><th>Current/Last User</th><th>Borrow/Return Date</th><th>Action</th></tr>";
+          var uname = document.getElementById("user_list").value;
+          values.forEach(function(item) {
+          var row = document.createElement('tr');
+          if(item[6] == "available" && uname != ""){
+            
+            var item_list = [0, 1, 3, 6, 7, 8];
+            item_list.forEach(function(i){
+              var cell = document.createElement('td');
+              cell.textContent = item[i];
+              row.appendChild(cell);
+            });
+
+            var btn_borrow = document.createElement('a');
+            btn_borrow.textContent = "Borrow";
+            btn_borrow.href = "javascript:void(0)";
+            btn_borrow.className ="waves-effect waves-light btn";
+            //btn_borrow.id = "btn_borrow_"+item[0];
+            //btn_borrow.value = item[0];
+            
+            btn_borrow.addEventListener("click", function(){
+              borrowItem(item[0], uname);
+              this.className="btn disabled";
+            });
+
+            row.appendChild(document.createElement('td').appendChild(btn_borrow));
+            table.appendChild(row);
+            
+          }
+        });
+        }
+        
+        function showAvailable(){
+          google.script.run.withSuccessHandler(getAvailable).loadItemData();
+        }
+        
+        function borrowItem(id, uname){
+          google.script.run.borrowItem(id, uname);
+        }
+        
+        function getBorrowed(values) {
+          //google.script.run.withSuccessHandler(showItems).loadAvailabelItemData();
+          //var values = google.script.run.loadItemData();
+          var uname = document.getElementById("user_list").value;
+          var table = document.getElementById("item_table");
+          table.innerHTML = "<tr><th>ID</th><th>Item Name</th><th>Location</th><th>Current State</th><th>Current/Last User</th><th>Borrow/Return Date</th><th>Action</th></tr>";
+          
+          values.forEach(function(item) {
+          var row = document.createElement('tr');
+          if(item[6] == "borrowed" && item[7] == uname){
+            
+            var item_list = [0, 1, 3, 6, 7, 8];
+            item_list.forEach(function(i){
+              var cell = document.createElement('td');
+              cell.textContent = item[i];
+              row.appendChild(cell);
+            });
+
+            var btn_return = document.createElement('button');
+            btn_return.textContent = "Return";
+            //btn_return.href = "javascript:void(0)";
+            btn_return.className="waves-effect waves-light btn";
+            //btn_return.id = "btn_borrow_"+item[0];
+            //btn_return.value = item[0];
+            btn_return.addEventListener("click", function(){
+              returnItem(item[0], uname);
+              this.className="btn disabled";
+            });
+
+            row.appendChild(document.createElement('td').appendChild(btn_return));
+            table.appendChild(row);
+            
+          }
+        });
+        }
+        
+        
+        function showBorrowed(){
+          google.script.run.withSuccessHandler(getBorrowed).loadItemData();
+        }
+        
+        function returnItem(id, uname){
+          google.script.run.returnItem(id, uname);
+        }
+        
+        function debug(test_str){
+          var test_field = document.getElementById("test");
+          test_field.innerHTML = test_str;
+        }
+        
+        function handleClick(cb) {
+          display("Clicked, new value = " + cb.checked);
+        }
+        
+
+  </script>
+
+
+
+
